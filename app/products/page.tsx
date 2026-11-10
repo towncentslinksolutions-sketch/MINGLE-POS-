@@ -35,7 +35,8 @@ export default function ProductsPage() {
   const loadProducts = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
     if (authError || !user) {
       setUserId("");
       setProducts([]);
