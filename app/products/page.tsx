@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft, Package, Plus, Search, Pencil, Trash2, X, RefreshCw } from "lucide-react";
@@ -29,7 +29,7 @@ export default function ProductsPage() {
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
