@@ -2,13 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, RefreshCw, CheckCircle2, Printer } from "lucide-react";
 import { createClient } from "../../lib/supabase/client";
 
 type Product = { id: string; name: string; selling_price: number; stock_quantity: number };
 type Customer = { id: string; full_name: string; phone: string | null };
 type CartItem = Product & { quantity: number };
-type Receipt = { receipt_number: string; total: number; amount_paid: number; change_due: number };
+type BusinessReceiptSettings = {
+  business_name?: string; logo_url?: string; business_phone?: string; business_email?: string;
+  business_address?: string; support_phone?: string; support_email?: string;
+  receipt_footer?: string; return_policy?: string; currency?: string;
+};
+type ReceiptItem = { id: string; name: string; quantity: number; selling_price: number };
+type Receipt = {
+  receipt_number: string; total: number; amount_paid: number; change_due: number;
+  items: ReceiptItem[]; customer_name: string; customer_phone: string;
+  sold_at: string; settings: BusinessReceiptSettings;
+};
 
 const money = (value: number) => new Intl.NumberFormat("en-KE", {
   style: "currency", currency: "KES", maximumFractionDigits: 2
@@ -25,6 +35,7 @@ export default function PosPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [ownerId, setOwnerId] = useState("");
+  const [businessSettings, setBusinessSettings] = useState<BusinessReceiptSettings>({});
   const [query, setQuery] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
@@ -58,12 +69,19 @@ export default function PosPage() {
       return;
     }
     setOwnerId(businessId);
-    const [productResult, customerResult] = await Promise.all([
+    const [productResult, customerResult, settingsResponse] = await Promise.all([
       supabase.from("products").select("id, name, selling_price, stock_quantity")
         .eq("user_id", businessId).order("name"),
       supabase.from("customers").select("id, full_name, phone")
-        .eq("user_id", businessId).order("full_name").limit(500)
+        .eq("user_id", businessId).order("full_name").limit(500),
+      fetch("/api/receipt-settings")
     ]);
+    let loadedSettings: BusinessReceiptSettings = {};
+    try {
+      const settingsData = await settingsResponse.json();
+      if (settingsResponse.ok && settingsData.settings) loadedSettings = settingsData.settings;
+    } catch { /* Keep a basic receipt if settings cannot be loaded. */ }
+    setBusinessSettings(loadedSettings);
     if (productResult.error) setError(productResult.error.message);
     else setProducts((productResult.data || []) as Product[]);
     if (customerResult.error) setError((previous) => previous || customerResult.error.message);
@@ -128,11 +146,17 @@ export default function PosPage() {
       setCheckingOut(false);
       return;
     }
+    const selectedCustomer = customers.find((customer) => customer.id === customerId);
     setReceipt({
       receipt_number: data.receipt_number,
       total: Number(data.total),
       amount_paid: Number(data.amount_paid),
-      change_due: Number(data.change_due)
+      change_due: Number(data.change_due),
+      items: cart.map((item) => ({ id: item.id, name: item.name, quantity: item.quantity, selling_price: Number(item.selling_price) })),
+      customer_name: selectedCustomer?.full_name || "Walk-in customer",
+      customer_phone: selectedCustomer?.phone || "",
+      sold_at: new Date().toISOString(),
+      settings: businessSettings
     });
     setCart([]);
     setCustomerId("");
@@ -154,15 +178,52 @@ export default function PosPage() {
 
         {error && <div role="alert" style={{ background: "#fff0f0", color: "#a52d2d", borderRadius: 9, padding: 12, fontSize: 13, marginBottom: 16 }}>{error}</div>}
 
-        {receipt && <section style={{ background: "#effaf3", border: "1px solid #ccebd6", borderRadius: 12, padding: 17, marginBottom: 18 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, color: "#176b3a", fontWeight: 700 }}><CheckCircle2 size={20}/> Sale completed successfully</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 12, marginTop: 13, fontSize: 13 }}>
-            <div><span style={{ color: "#547461" }}>Receipt</span><strong style={{ display: "block", marginTop: 4 }}>{receipt.receipt_number}</strong></div>
-            <div><span style={{ color: "#547461" }}>Total</span><strong style={{ display: "block", marginTop: 4 }}>{money(receipt.total)}</strong></div>
-            <div><span style={{ color: "#547461" }}>Cash received</span><strong style={{ display: "block", marginTop: 4 }}>{money(receipt.amount_paid)}</strong></div>
-            <div><span style={{ color: "#547461" }}>Change</span><strong style={{ display: "block", marginTop: 4 }}>{money(receipt.change_due)}</strong></div>
+        {receipt && <section style={{ marginBottom: 18 }}>
+          <div className="no-print" style={{ background: "#effaf3", border: "1px solid #ccebd6", borderRadius: 12, padding: 17, marginBottom: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9, color: "#176b3a", fontWeight: 700 }}><CheckCircle2 size={20}/> Sale completed successfully</div>
+            <p style={{ fontSize: 13, color: "#547461" }}>Receipt {receipt.receipt_number} is ready to print.</p>
+            <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+              <button onClick={() => window.print()} style={{ display: "inline-flex", alignItems: "center", gap: 7, border: 0, background: "#176b3a", color: "white", borderRadius: 7, padding: "10px 14px", fontWeight: 700 }}><Printer size={16}/> Print receipt</button>
+              <button onClick={() => setReceipt(null)} style={{ border: "1px solid #b9ddc6", background: "white", color: "#176b3a", borderRadius: 7, padding: "9px 12px" }}>Start next sale</button>
+            </div>
           </div>
-          <button onClick={() => setReceipt(null)} style={{ marginTop: 12, border: "1px solid #b9ddc6", background: "white", color: "#176b3a", borderRadius: 7, padding: "8px 12px" }}>Start next sale</button>
+          <article className="print-receipt" style={{ width: "100%", maxWidth: 380, margin: "0 auto", background: "white", color: "#111", padding: 18, border: "1px solid #e3e3e3", fontFamily: "Arial, sans-serif", fontSize: 12 }}>
+            <div style={{ textAlign: "center", marginBottom: 12 }}>
+              {receipt.settings.logo_url && <img src={receipt.settings.logo_url} alt="Business logo" style={{ maxWidth: 110, maxHeight: 70, objectFit: "contain", margin: "0 auto 8px" }}/>}
+              <h2 style={{ fontSize: 18, margin: "0 0 5px" }}>{receipt.settings.business_name || "MINGLE POS Store"}</h2>
+              {receipt.settings.business_address && <div>{receipt.settings.business_address}</div>}
+              {receipt.settings.business_phone && <div>Tel: {receipt.settings.business_phone}</div>}
+              {receipt.settings.business_email && <div>{receipt.settings.business_email}</div>}
+              <div style={{ fontWeight: 700, marginTop: 10 }}>SALES RECEIPT</div>
+            </div>
+            <div style={{ borderTop: "1px dashed #777", borderBottom: "1px dashed #777", padding: "8px 0", lineHeight: 1.7 }}>
+              <div>Receipt: <strong>{receipt.receipt_number}</strong></div>
+              <div>Date: {new Date(receipt.sold_at).toLocaleString("en-KE")}</div>
+              <div>Customer: {receipt.customer_name}</div>
+              {receipt.customer_phone && <div>Phone: {receipt.customer_phone}</div>}
+            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", margin: "10px 0" }}>
+              <thead><tr style={{ borderBottom: "1px solid #777", textAlign: "left" }}><th style={{ padding: "5px 2px" }}>Item</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Qty</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Price</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Amount</th></tr></thead>
+              <tbody>{receipt.items.map((item) => <tr key={item.id}><td style={{ padding: "6px 2px" }}>{item.name}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{item.quantity}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price)}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price * item.quantity)}</td></tr>)}</tbody>
+            </table>
+            <div style={{ borderTop: "1px dashed #777", paddingTop: 8, lineHeight: 1.8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}><span>TOTAL</span><span>{money(receipt.total)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash received</span><span>{money(receipt.amount_paid)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Change</span><span>{money(receipt.change_due)}</span></div>
+            </div>
+            {receipt.settings.receipt_footer && <div style={{ textAlign: "center", marginTop: 14, whiteSpace: "pre-wrap" }}>{receipt.settings.receipt_footer}</div>}
+            {receipt.settings.return_policy && <div style={{ borderTop: "1px dashed #777", marginTop: 10, paddingTop: 8, whiteSpace: "pre-wrap" }}>Return policy: {receipt.settings.return_policy}</div>}
+            <div style={{ textAlign: "center", marginTop: 14, fontSize: 10 }}>Powered by MINGLE POS</div>
+          </article>
+          <style jsx global>{`
+            @media print {
+              @page { size: 80mm auto; margin: 4mm; }
+              body * { visibility: hidden !important; }
+              .print-receipt, .print-receipt * { visibility: visible !important; }
+              .print-receipt { position: absolute !important; left: 0 !important; top: 0 !important; width: 72mm !important; max-width: 72mm !important; margin: 0 !important; padding: 0 !important; border: 0 !important; }
+              .no-print { display: none !important; }
+            }
+          `}</style>
         </section>}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,340px),1fr))", gap: 18, alignItems: "start" }}>
