@@ -234,6 +234,7 @@ export default function Home() {
             <BarChart3 size={19} /><span>Reports</span>
           </Link>}
           {role === "owner" && <Link href="/payment-settings" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}><Wallet size={19} /><span>Payment settings</span></Link>}
+          {role === "owner" && <Link href="/settings" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}><ShieldCheck size={19} /><span>Business settings</span></Link>}
           {role === "owner" && <Link href="/team" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
             <UserCog size={19} /><span>Employees</span>
           </Link> }
