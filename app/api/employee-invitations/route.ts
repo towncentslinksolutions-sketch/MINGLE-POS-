@@ -5,6 +5,15 @@ import { createServerSupabaseClient } from "../../../lib/supabase/server";
 
 export const runtime = "nodejs";
 
+function getSafeErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}
+
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -38,7 +47,8 @@ export async function GET() {
     if (error) throw error;
     return NextResponse.json({ active: Boolean(data?.active) });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to check invitation link." }, { status: 500 });
+    console.error("[employee-invitations] GET failed:", error);
+    return NextResponse.json({ error: getSafeErrorMessage(error, "Unable to check invitation link.") }, { status: 500 });
   }
 }
 
@@ -54,7 +64,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
     return NextResponse.json({ link: new URL(`/join/${token}`, request.nextUrl.origin).toString() });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create invitation link." }, { status: 500 });
+    console.error("[employee-invitations] POST failed:", error);
+    return NextResponse.json({ error: getSafeErrorMessage(error, "Unable to create invitation link.") }, { status: 500 });
   }
 }
 
@@ -67,6 +78,7 @@ export async function DELETE() {
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to revoke invitation link." }, { status: 500 });
+    console.error("[employee-invitations] DELETE failed:", error);
+    return NextResponse.json({ error: getSafeErrorMessage(error, "Unable to revoke invitation link.") }, { status: 500 });
   }
 }
