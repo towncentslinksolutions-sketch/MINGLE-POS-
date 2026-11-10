@@ -112,7 +112,7 @@ export default function TeamPage() {
       </header>
       {error && <div role="alert" style={{ background: "#fff0f0", color: "#a52d2d", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 14 }}>{error}</div>}
       {notice && <div role="status" style={{ background: "#edf8f0", color: "#216b3b", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 14 }}>{notice}</div>}
-      {allowed && <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 18, marginBottom: 18 }}>
+      {allowed && <><section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 18, marginBottom: 18 }}>
         <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Shared employee registration link</h2>
         <p style={{ color: "#778294", fontSize: 13, lineHeight: 1.6 }}>Create one link and share it with all employees. Anyone with the link can request to join this business as a cashier. You can disable it or generate a replacement at any time.</p>
         {inviteActive && <p style={{ color: "#23834a", fontSize: 12 }}>A shared invitation link is currently active.</p>}
@@ -138,7 +138,7 @@ export default function TeamPage() {
             })}</tbody>
           </table></div>}
         <p style={{ color: "#778294", fontSize: 12, lineHeight: 1.6, marginTop: 14 }}>Removing access deactivates the employee's business membership; it does not delete their login account or historical sales. Account IDs are shown because employee display names and emails are not currently stored in the membership records.</p>
-      </section>}
+      </section></>}
     </div>
   </main>;
 }
