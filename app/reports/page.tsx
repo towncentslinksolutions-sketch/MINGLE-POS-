@@ -30,8 +30,11 @@ export default function ReportsPage() {
     setRole(member.role);
     if (member.role === "cashier") { setAllowed(false); setError("Reports are restricted to owners and managers."); setLoading(false); return; }
     setAllowed(true);
+    const { data: memberships, error: membershipsError } = await supabase.from("business_memberships").select("user_id").eq("owner_id", ownerId).eq("active", true);
+    if (membershipsError) { setError(membershipsError.message); setLoading(false); return; }
+    const businessUserIds = [...new Set([ownerId, ...(memberships || []).map(m => m.user_id)])];
     const from = new Date(); from.setDate(from.getDate() - Number(range)); from.setHours(0, 0, 0, 0);
-    const { data, error: salesError } = await supabase.from("sales").select("id, receipt_number, total, payment_method, status, created_at, user_id").eq("user_id", ownerId).gte("created_at", from.toISOString()).order("created_at", { ascending: false });
+    const { data, error: salesError } = await supabase.from("sales").select("id, receipt_number, total, payment_method, status, created_at, user_id").in("user_id", businessUserIds).gte("created_at", from.toISOString()).order("created_at", { ascending: false });
     if (salesError) { setError(salesError.message); setLoading(false); return; }
     const saleRows = (data || []) as Sale[];
     setSales(saleRows);
