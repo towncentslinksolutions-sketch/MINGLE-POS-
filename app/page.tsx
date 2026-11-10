@@ -44,9 +44,10 @@ export default function Home() {
     else setLoading(true);
     setError("");
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
     if (authError || !user) {
-      setError("You are not signed in. Please sign in to your MINGLE POS account.");
+      setError(authError?.message || "Your MINGLE POS session is not available. Please sign in again.");
       setLoading(false);
       setRefreshing(false);
       return;
