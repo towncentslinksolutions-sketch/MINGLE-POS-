@@ -41,6 +41,7 @@ export default function PlatformAdminPage() {
       </header>
       {error && <div role="alert" style={{ background: "#fff0f0", color: "#a52d2d", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 16 }}>{error}</div>}
       {notice && <div role="status" style={{ background: "#edfaf1", color: "#176b3a", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 16 }}>{notice}</div>}
+      <p style={{ margin: "0 0 18px" }}><Link href="/platform-admin/applications" style={{ display: "inline-block", background: "#ecebff", color: "#5148c7", borderRadius: 8, padding: "11px 14px", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>Review business applications →</Link> <Link href="/apply" style={{ marginLeft: 12, color: "#635bdb", fontSize: 13 }}>Public application page</Link></p>
       <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 20, marginBottom: 20 }}>
         <h2 style={{ fontSize: 18, margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}><UserPlus size={19} /> Approve and onboard a business</h2>
         <p style={{ color: "#778294", fontSize: 13, margin: "0 0 18px" }}>After reviewing a business request, enter the business name and owner's email. MINGLE POS sends the owner a secure account invitation.</p>
