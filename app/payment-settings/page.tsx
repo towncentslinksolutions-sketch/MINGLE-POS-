@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent, CSSProperties } from "react";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck, Save } from "lucide-react";
 
@@ -33,7 +34,7 @@ export default function PaymentSettingsPage() {
     return () => { active = false; };
   }, []);
 
-  async function save(event: React.FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true); setError(""); setMessage("");
     try {
@@ -52,7 +53,7 @@ export default function PaymentSettingsPage() {
     } finally { setSaving(false); }
   }
 
-  const field: React.CSSProperties = { display: "block", width: "100%", boxSizing: "border-box", padding: 12, border: "1px solid #dce2eb", borderRadius: 8, marginTop: 7, marginBottom: 16, background: "white" };
+  const field: CSSProperties = { display: "block", width: "100%", boxSizing: "border-box", padding: 12, border: "1px solid #dce2eb", borderRadius: 8, marginTop: 7, marginBottom: 16, background: "white" };
 
   return <main style={{ minHeight: "100vh", background: "#f5f7fb", color: "#182230", padding: "24px 16px", fontFamily: "Inter, Arial, sans-serif" }}>
     <div style={{ maxWidth: 680, margin: "0 auto" }}>
