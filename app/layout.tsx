@@ -34,6 +34,9 @@ export default function RootLayout({
       <body>
         <PwaRegister />
         {children}
+        <footer style={{ padding: "16px 12px", textAlign: "center", color: "#64748b", fontSize: 12, borderTop: "1px solid rgba(148,163,184,0.18)" }}>
+          © 2026 Sir Nick Technologies. All rights reserved.
+        </footer>
       </body>
     </html>
   );
