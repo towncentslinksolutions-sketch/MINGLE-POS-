@@ -135,12 +135,12 @@ export default function Home() {
           <Link href="/products" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
             <Package size={19} /><span>Products</span>
           </Link>
-          <div className="nav-item" aria-disabled="true" title="Customer management is coming next">
-            <Users size={19} /><span>Customers</span><small style={{ marginLeft: "auto", fontSize: 9 }}>SOON</small>
-          </div>
-          {!isCashier && <div className="nav-item" aria-disabled="true" title="Business reports are coming next">
-            <BarChart3 size={19} /><span>Reports</span><small style={{ marginLeft: "auto", fontSize: 9 }}>SOON</small>
-          </div>}
+          <Link href="/customers" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
+            <Users size={19} /><span>Customers</span>
+          </Link>
+          {!isCashier && <Link href="/reports" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
+            <BarChart3 size={19} /><span>Reports</span>
+          </Link>}
         </nav>
         <div className="sidebar-bottom">
           <div className="user-avatar">{initials}</div>
