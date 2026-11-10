@@ -23,6 +23,7 @@ export default function ProductsPage() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [userId, setUserId] = useState("");
+  const [canManage, setCanManage] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -42,11 +43,32 @@ export default function ProductsPage() {
       setLoading(false);
       return;
     }
-    setUserId(user.id);
+    const { data: ownerId, error: ownerError } = await supabase.rpc("current_business_owner_id");
+    if (ownerError || !ownerId) {
+      setUserId("");
+      setProducts([]);
+      setError(ownerError?.message || "Your account is not linked to a business.");
+      setLoading(false);
+      return;
+    }
+    setUserId(ownerId);
+    const { data: membership, error: membershipError } = await supabase
+      .from("business_memberships")
+      .select("role")
+      .eq("owner_id", ownerId)
+      .eq("user_id", user.id)
+      .eq("active", true)
+      .maybeSingle();
+    if (membershipError) {
+      setError(membershipError.message);
+      setLoading(false);
+      return;
+    }
+    setCanManage(membership?.role === "owner" || membership?.role === "manager");
     const { data, error: queryError } = await supabase
       .from("products")
       .select("id, name, selling_price, stock_quantity")
-      .eq("user_id", user.id)
+      .eq("user_id", ownerId)
       .order("name", { ascending: true });
     if (queryError) setError(queryError.message);
     else setProducts((data || []) as Product[]);
@@ -120,9 +142,9 @@ export default function ProductsPage() {
             <h1 style={{ fontSize: 28, margin: "8px 0" }}>Products</h1>
             <p style={{ color: "#778294", fontSize: 13, margin: 0 }}>Add, update and track your store products.</p>
           </div>
-          <button onClick={openNew} style={{ border: 0, borderRadius: 9, background: "#635bdb", color: "white", padding: "12px 16px", display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+          {canManage && <button onClick={openNew} style={{ border: 0, borderRadius: 9, background: "#635bdb", color: "white", padding: "12px 16px", display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
             <Plus size={17} /> Add product
-          </button>
+          </button>}
         </header>
 
         <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 18 }}>
@@ -138,7 +160,7 @@ export default function ProductsPage() {
 
           {loading ? <p style={{ padding: 35, textAlign: "center", color: "#778294" }}>Loading products...</p> :
             !userId ? <div style={{ textAlign: "center", padding: "42px 12px" }}><Package size={34} color="#929bad" /><p style={{ color: "#596579" }}>Sign in to view your inventory.</p></div> :
-            filtered.length === 0 ? <div style={{ textAlign: "center", padding: "42px 12px" }}><Package size={34} color="#929bad" /><h3 style={{ marginBottom: 6 }}>No products yet</h3><p style={{ color: "#778294", fontSize: 13 }}>Add your first product to start managing inventory.</p><button onClick={openNew} style={{ border: 0, background: "#635bdb", color: "white", borderRadius: 8, padding: "10px 14px" }}>Add first product</button></div> :
+            filtered.length === 0 ? <div style={{ textAlign: "center", padding: "42px 12px" }}><Package size={34} color="#929bad" /><h3 style={{ marginBottom: 6 }}>No products yet</h3><p style={{ color: "#778294", fontSize: 13 }}>{canManage ? "Add your first product to start managing inventory." : "Your business inventory will appear here."}</p>{canManage && <button onClick={openNew} style={{ border: 0, background: "#635bdb", color: "white", borderRadius: 8, padding: "10px 14px" }}>Add first product</button>}</div> :
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560, textAlign: "left" }}>
                 <thead><tr style={{ background: "#f8f9fc", color: "#8490a2", fontSize: 11, textTransform: "uppercase" }}><th style={{ padding: 13 }}>Product</th><th style={{ padding: 13 }}>Selling price</th><th style={{ padding: 13 }}>Stock quantity</th><th style={{ padding: 13, textAlign: "right" }}>Actions</th></tr></thead>
@@ -147,8 +169,8 @@ export default function ProductsPage() {
                   <td style={{ padding: 14 }}>{money(product.selling_price)}</td>
                   <td style={{ padding: 14 }}>{product.stock_quantity}</td>
                   <td style={{ padding: 14, textAlign: "right", whiteSpace: "nowrap" }}>
-                    <button onClick={() => openEdit(product)} aria-label={`Edit ${product.name}`} style={{ border: "1px solid #e5e8ef", background: "white", borderRadius: 7, padding: 8, marginRight: 7, color: "#635bdb" }}><Pencil size={15} /></button>
-                    <button onClick={() => void deleteProduct(product)} aria-label={`Delete ${product.name}`} style={{ border: "1px solid #f1dada", background: "white", borderRadius: 7, padding: 8, color: "#c34444" }}><Trash2 size={15} /></button>
+                    {canManage && <><button onClick={() => openEdit(product)} aria-label={`Edit ${product.name}`} style={{ border: "1px solid #e5e8ef", background: "white", borderRadius: 7, padding: 8, marginRight: 7, color: "#635bdb" }}><Pencil size={15} /></button>
+                    <button onClick={() => void deleteProduct(product)} aria-label={`Delete ${product.name}`} style={{ border: "1px solid #f1dada", background: "white", borderRadius: 7, padding: 8, color: "#c34444" }}><Trash2 size={15} /></button></>}
                   </td>
                 </tr>)}</tbody>
               </table>
@@ -157,7 +179,7 @@ export default function ProductsPage() {
         </section>
       </div>
 
-      {showForm && <div onClick={() => setShowForm(false)} style={{ position: "fixed", inset: 0, background: "rgba(15,20,35,.48)", display: "grid", placeItems: "center", padding: 16, zIndex: 20 }}>
+      {showForm && canManage && <div onClick={() => setShowForm(false)} style={{ position: "fixed", inset: 0, background: "rgba(15,20,35,.48)", display: "grid", placeItems: "center", padding: 16, zIndex: 20 }}>
         <form onSubmit={saveProduct} onClick={(e) => e.stopPropagation()} style={{ background: "white", width: "100%", maxWidth: 440, borderRadius: 14, padding: 22, boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
             <h2 style={{ margin: 0, fontSize: 19 }}>{editing ? "Edit product" : "Add product"}</h2>
