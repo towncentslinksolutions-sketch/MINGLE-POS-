@@ -20,8 +20,8 @@ type Receipt = {
   sold_at: string; settings: BusinessReceiptSettings;
 };
 
-const money = (value: number) => new Intl.NumberFormat("en-KE", {
-  style: "currency", currency: "KES", maximumFractionDigits: 2
+const money = (value: number, currency = "KES") => new Intl.NumberFormat("en-KE", {
+  style: "currency", currency: /^[A-Z]{3}$/.test(currency) ? currency : "KES", maximumFractionDigits: 2
 }).format(Number(value || 0));
 
 const field: React.CSSProperties = {
@@ -204,12 +204,12 @@ export default function PosPage() {
             </div>
             <table style={{ width: "100%", borderCollapse: "collapse", margin: "10px 0" }}>
               <thead><tr style={{ borderBottom: "1px solid #777", textAlign: "left" }}><th style={{ padding: "5px 2px" }}>Item</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Qty</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Price</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Amount</th></tr></thead>
-              <tbody>{receipt.items.map((item) => <tr key={item.id}><td style={{ padding: "6px 2px" }}>{item.name}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{item.quantity}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price)}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price * item.quantity)}</td></tr>)}</tbody>
+              <tbody>{receipt.items.map((item) => <tr key={item.id}><td style={{ padding: "6px 2px" }}>{item.name}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{item.quantity}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price, receipt.settings.currency, businessSettings.currency)}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price * item.quantity, receipt.settings.currency, businessSettings.currency)}</td></tr>)}</tbody>
             </table>
             <div style={{ borderTop: "1px dashed #777", paddingTop: 8, lineHeight: 1.8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}><span>TOTAL</span><span>{money(receipt.total)}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash received</span><span>{money(receipt.amount_paid)}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Change</span><span>{money(receipt.change_due)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}><span>TOTAL</span><span>{money(receipt.total, receipt.settings.currency, businessSettings.currency)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash received</span><span>{money(receipt.amount_paid, receipt.settings.currency, businessSettings.currency)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Change</span><span>{money(receipt.change_due, receipt.settings.currency, businessSettings.currency)}</span></div>
             </div>
             {receipt.settings.receipt_footer && <div style={{ textAlign: "center", marginTop: 14, whiteSpace: "pre-wrap" }}>{receipt.settings.receipt_footer}</div>}
             {receipt.settings.return_policy && <div style={{ borderTop: "1px dashed #777", marginTop: 10, paddingTop: 8, whiteSpace: "pre-wrap" }}>Return policy: {receipt.settings.return_policy}</div>}
@@ -236,7 +236,7 @@ export default function PosPage() {
               filtered.length === 0 ? <p style={{ color: "#778294", padding: 20, textAlign: "center" }}>No matching products found.</p> :
               <div style={{ display: "grid", gap: 9, maxHeight: 560, overflowY: "auto" }}>
                 {filtered.map((product) => <div key={product.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, border: "1px solid #edf0f5", borderRadius: 9, padding: 12 }}>
-                  <div style={{ minWidth: 0 }}><strong style={{ display: "block", fontSize: 13 }}>{product.name}</strong><span style={{ display: "block", color: "#635bdb", fontSize: 13, marginTop: 4 }}>{money(product.selling_price)}</span><span style={{ color: "#8490a2", fontSize: 11 }}>Stock: {product.stock_quantity}</span></div>
+                  <div style={{ minWidth: 0 }}><strong style={{ display: "block", fontSize: 13 }}>{product.name}</strong><span style={{ display: "block", color: "#635bdb", fontSize: 13, marginTop: 4 }}>{money(product.selling_price, businessSettings.currency)}</span><span style={{ color: "#8490a2", fontSize: 11 }}>Stock: {product.stock_quantity}</span></div>
                   <button disabled={product.stock_quantity < 1 || loading} onClick={() => addProduct(product)} style={{ flexShrink: 0, border: 0, borderRadius: 8, background: product.stock_quantity < 1 ? "#e7e9ef" : "#635bdb", color: product.stock_quantity < 1 ? "#8992a2" : "white", padding: "9px 11px", display: "inline-flex", alignItems: "center", gap: 5 }}><Plus size={15}/> Add</button>
                 </div>)}
               </div>}
@@ -252,9 +252,9 @@ export default function PosPage() {
             {cart.length === 0 ? <div style={{ textAlign: "center", padding: "35px 10px", color: "#8490a2" }}><ShoppingCart size={30}/><p style={{ fontSize: 13 }}>Your cart is empty. Add products to begin.</p></div> :
               <div style={{ display: "grid", gap: 12, marginBottom: 16 }}>
                 {cart.map((item) => <div key={item.id} style={{ borderBottom: "1px solid #edf0f5", paddingBottom: 11 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><strong style={{ fontSize: 13 }}>{item.name}</strong><strong style={{ fontSize: 13 }}>{money(item.selling_price * item.quantity)}</strong></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><strong style={{ fontSize: 13 }}>{item.name}</strong><strong style={{ fontSize: 13 }}>{money(item.selling_price * item.quantity, businessSettings.currency)}</strong></div>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 9 }}>
-                    <span style={{ color: "#8490a2", fontSize: 11 }}>{money(item.selling_price)} each</span>
+                    <span style={{ color: "#8490a2", fontSize: 11 }}>{money(item.selling_price, businessSettings.currency)} each</span>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                       <button aria-label="Decrease quantity" onClick={() => changeQuantity(item.id, -1)} style={{ border: "1px solid #e2e6ee", background: "white", borderRadius: 6, padding: 6 }}><Minus size={14}/></button>
                       <strong style={{ minWidth: 18, textAlign: "center", fontSize: 13 }}>{item.quantity}</strong>
@@ -265,7 +265,7 @@ export default function PosPage() {
                 </div>)}
               </div>}
             <div style={{ borderTop: "1px solid #e9edf3", paddingTop: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, marginBottom: 14 }}><span>Total</span><span>{money(total)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, marginBottom: 14 }}><span>Total</span><span>{money(total, businessSettings.currency)}</span></div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Cash received (KSh)</label>
               <input type="number" min={total} step="0.01" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} placeholder={total ? total.toFixed(2) : "0.00"} style={{ ...field, marginBottom: 12 }}/>
               <div style={{ display: "flex", justifyContent: "space-between", color: "#596579", fontSize: 13, marginBottom: 15 }}><span>Change due</span><strong>{money(Math.max(0, Number(amountPaid || 0) - total))}</strong></div>
