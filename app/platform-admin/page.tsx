@@ -3,9 +3,8 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Building2, RefreshCw, ShieldCheck, UserPlus } from "lucide-react";
-import { createClient } from "../../lib/supabase/client";
 
-type ClientAccount = { owner_id: string; email: string; created_at: string };
+type ClientAccount = { owner_id: string; email: string; business_name: string; created_at: string };
 
 export default function PlatformAdminPage() {
   const [clients, setClients] = useState<ClientAccount[]>([]);
@@ -97,7 +96,7 @@ export default function PlatformAdminPage() {
           {loading ? <p style={{ color: "#778294" }}>Loading business accounts...</p> : clients.length === 0 ? <p style={{ color: "#778294", fontSize: 13 }}>No business owner accounts found yet.</p> :
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480, textAlign: "left" }}>
-                <thead><tr style={{ background: "#f8f9fc", color: "#8490a2", fontSize: 11, textTransform: "uppercase" }}><th style={{ padding: 12 }}>Owner email</th><th style={{ padding: 12 }}>Account created</th><th style={{ padding: 12 }}>Owner ID</th></tr></thead>
+                <thead><tr style={{ background: "#f8f9fc", color: "#8490a2", fontSize: 11, textTransform: "uppercase" }}><th style={{ padding: 12 }}>Business</th><th style={{ padding: 12 }}>Owner email</th><th style={{ padding: 12 }}>Account created</th><th style={{ padding: 12 }}>Owner ID</th></tr></thead>
                 <tbody>{clients.map(client => <tr key={client.owner_id} style={{ borderBottom: "1px solid #e9edf3", fontSize: 13 }}>
                   <td style={{ padding: 12, fontWeight: 600 }}>{client.email}</td>
                   <td style={{ padding: 12 }}>{new Date(client.created_at).toLocaleDateString("en-KE")}</td>
