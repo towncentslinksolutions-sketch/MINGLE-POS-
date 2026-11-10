@@ -127,7 +127,7 @@ export default function Home() {
 
   async function signOut() {
     await supabase.auth.signOut();
-    window.location.reload();
+    window.location.href = "/login";
   }
 
   const isCashier = role === "cashier";
