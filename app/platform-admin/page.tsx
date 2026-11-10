@@ -37,18 +37,18 @@ export default function PlatformAdminPage() {
       <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#635bdb", textDecoration: "none", fontSize: 13, marginBottom: 24 }}><ArrowLeft size={17} /> Back to dashboard</Link>
       <header style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
         <div style={{ width: 46, height: 46, display: "grid", placeItems: "center", borderRadius: 12, color: "#635bdb", background: "#ecebff" }}><ShieldCheck size={24} /></div>
-        <div><p style={{ color: "#635bdb", fontSize: 11, fontWeight: 700, letterSpacing: 1.3, margin: 0 }}>SIR NICK TECHNOLOGIES · MINGLE POS</p><h1 style={{ fontSize: 27, margin: "5px 0" }}>Platform Admin</h1><p style={{ color: "#778294", fontSize: 13, margin: 0 }}>Only approved administrators can create business owner accounts.</p></div>
+        <div><p style={{ color: "#635bdb", fontSize: 11, fontWeight: 700, letterSpacing: 1.3, margin: 0 }}>SIR NICK TECHNOLOGIES · MINGLE POS</p><h1 style={{ fontSize: 27, margin: "5px 0" }}>Platform Admin</h1><p style={{ color: "#778294", fontSize: 13, margin: 0 }}>Invite and manage business owners across MINGLE POS.</p></div>
       </header>
       {error && <div role="alert" style={{ background: "#fff0f0", color: "#a52d2d", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 16 }}>{error}</div>}
       {notice && <div role="status" style={{ background: "#edfaf1", color: "#176b3a", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 16 }}>{notice}</div>}
       <p style={{ margin: "0 0 18px" }}><Link href="/platform-admin/applications" style={{ display: "inline-block", background: "#ecebff", color: "#5148c7", borderRadius: 8, padding: "11px 14px", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>Review business applications →</Link> <Link href="/apply" style={{ marginLeft: 12, color: "#635bdb", fontSize: 13 }}>Public application page</Link></p>
       <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 20, marginBottom: 20 }}>
-        <h2 style={{ fontSize: 18, margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}><UserPlus size={19} /> Approve and onboard a business</h2>
-        <p style={{ color: "#778294", fontSize: 13, margin: "0 0 18px" }}>After reviewing a business request, enter the business name and owner's email. MINGLE POS sends the owner a secure account invitation.</p>
+        <h2 style={{ fontSize: 18, margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}><UserPlus size={19} /> Invite a business owner</h2>
+        <p style={{ color: "#778294", fontSize: 13, margin: "0 0 18px" }}>Enter the business name and owner's email. MINGLE POS will send the owner a secure invitation to set up their account.</p>
         <form onSubmit={createClientAccount} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
           <label style={{ fontSize: 12, fontWeight: 600 }}>Business name<input required maxLength={100} value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="e.g. My Mini Supermarket" style={{ boxSizing: "border-box", display: "block", width: "100%", marginTop: 7, padding: 12, border: "1px solid #dfe4ec", borderRadius: 8 }} /></label>
           <label style={{ fontSize: 12, fontWeight: 600 }}>Owner email<input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="owner@example.com" style={{ boxSizing: "border-box", display: "block", width: "100%", marginTop: 7, padding: 12, border: "1px solid #dfe4ec", borderRadius: 8 }} /></label>
-          <button disabled={saving} type="submit" style={{ alignSelf: "end", border: 0, borderRadius: 8, background: "#635bdb", color: "white", padding: 13, fontWeight: 700, opacity: saving ? .6 : 1 }}>{saving ? "Sending invitation..." : "Approve & invite owner"}</button>
+          <button disabled={saving} type="submit" style={{ alignSelf: "end", border: 0, borderRadius: 8, background: "#635bdb", color: "white", padding: 13, fontWeight: 700, opacity: saving ? .6 : 1 }}>{saving ? "Sending invitation..." : "Send owner invitation"}</button>
         </form>
       </section>
       <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 20 }}>
