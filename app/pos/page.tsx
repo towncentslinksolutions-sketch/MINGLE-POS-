@@ -204,12 +204,12 @@ export default function PosPage() {
             </div>
             <table style={{ width: "100%", borderCollapse: "collapse", margin: "10px 0" }}>
               <thead><tr style={{ borderBottom: "1px solid #777", textAlign: "left" }}><th style={{ padding: "5px 2px" }}>Item</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Qty</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Price</th><th style={{ padding: "5px 2px", textAlign: "right" }}>Amount</th></tr></thead>
-              <tbody>{receipt.items.map((item) => <tr key={item.id}><td style={{ padding: "6px 2px" }}>{item.name}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{item.quantity}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price, receipt.settings.currency, businessSettings.currency)}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price * item.quantity, receipt.settings.currency, businessSettings.currency)}</td></tr>)}</tbody>
+              <tbody>{receipt.items.map((item) => <tr key={item.id}><td style={{ padding: "6px 2px" }}>{item.name}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{item.quantity}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price, receipt.settings.currency)}</td><td style={{ padding: "6px 2px", textAlign: "right" }}>{money(item.selling_price * item.quantity, receipt.settings.currency)}</td></tr>)}</tbody>
             </table>
             <div style={{ borderTop: "1px dashed #777", paddingTop: 8, lineHeight: 1.8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}><span>TOTAL</span><span>{money(receipt.total, receipt.settings.currency, businessSettings.currency)}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash received</span><span>{money(receipt.amount_paid, receipt.settings.currency, businessSettings.currency)}</span></div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Change</span><span>{money(receipt.change_due, receipt.settings.currency, businessSettings.currency)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 15 }}><span>TOTAL</span><span>{money(receipt.total, receipt.settings.currency)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Cash received</span><span>{money(receipt.amount_paid, receipt.settings.currency)}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}><span>Change</span><span>{money(receipt.change_due, receipt.settings.currency)}</span></div>
             </div>
             {receipt.settings.receipt_footer && <div style={{ textAlign: "center", marginTop: 14, whiteSpace: "pre-wrap" }}>{receipt.settings.receipt_footer}</div>}
             {receipt.settings.return_policy && <div style={{ borderTop: "1px dashed #777", marginTop: 10, paddingTop: 8, whiteSpace: "pre-wrap" }}>Return policy: {receipt.settings.return_policy}</div>}
@@ -268,7 +268,7 @@ export default function PosPage() {
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, marginBottom: 14 }}><span>Total</span><span>{money(total, businessSettings.currency)}</span></div>
               <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6 }}>Cash received (KSh)</label>
               <input type="number" min={total} step="0.01" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} placeholder={total ? total.toFixed(2) : "0.00"} style={{ ...field, marginBottom: 12 }}/>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#596579", fontSize: 13, marginBottom: 15 }}><span>Change due</span><strong>{money(Math.max(0, Number(amountPaid || 0) - total))}</strong></div>
+              <div style={{ display: "flex", justifyContent: "space-between", color: "#596579", fontSize: 13, marginBottom: 15 }}><span>Change due</span><strong>{money(Math.max(0, Number(amountPaid || 0) - total), businessSettings.currency)}</strong></div>
               <button onClick={() => void completeSale()} disabled={checkingOut || loading || cart.length === 0} style={{ width: "100%", border: 0, borderRadius: 9, padding: 14, background: checkingOut || loading || cart.length === 0 ? "#aeb4c5" : "#635bdb", color: "white", fontWeight: 700, fontSize: 14 }}>{checkingOut ? "Completing sale..." : "Complete cash sale"}</button>
               <button onClick={() => { setCart([]); setAmountPaid(""); setError(""); }} disabled={checkingOut || cart.length === 0} style={{ width: "100%", border: "1px solid #e2e6ee", borderRadius: 9, padding: 11, background: "white", color: "#596579", marginTop: 8 }}>Clear cart</button>
               <p style={{ color: "#929bad", fontSize: 10, lineHeight: 1.5, margin: "12px 0 0" }}>Cash checkout only. Stock and sale records are updated together by the database. M-Pesa and card payments are not enabled yet.</p>
