@@ -8,6 +8,7 @@ import {
   LogOut, ShieldCheck, AlertCircle, UserCog
 } from "lucide-react";
 import { createClient } from "../lib/supabase/client";
+import PwaInstallButton from "./pwa-install-button";
 
 type Sale = {
   id: string;
@@ -174,6 +175,7 @@ export default function Home() {
         <header className="topbar">
           <button className="menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu /></button>
           <div className="search-box"><Search size={18} /><input placeholder="Search anything..." disabled /></div>
+          <PwaInstallButton />
           <button className="notification" onClick={() => void loadDashboard(true)} aria-label="Refresh dashboard">
             <RefreshCw size={18} className={refreshing ? "spin" : ""} />
           </button>
