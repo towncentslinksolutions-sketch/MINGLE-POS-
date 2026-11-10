@@ -233,6 +233,7 @@ export default function Home() {
           {!isCashier && <Link href="/reports" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
             <BarChart3 size={19} /><span>Reports</span>
           </Link>}
+          {role === "owner" && <Link href="/payment-settings" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}><Wallet size={19} /><span>Payment settings</span></Link>}
           {role === "owner" && <Link href="/team" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
             <UserCog size={19} /><span>Employees</span>
           </Link> }
