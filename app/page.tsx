@@ -39,6 +39,10 @@ export default function Home() {
   const [todayOrders, setTodayOrders] = useState(0);
   const [productCount, setProductCount] = useState(0);
   const [customerCount, setCustomerCount] = useState(0);
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<{ id: string; title: string; detail: string; type: string; href: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const loadDashboard = useCallback(async (quiet = false) => {
     if (quiet) setRefreshing(true);
@@ -124,6 +128,78 @@ export default function Home() {
     setRefreshing(false);
   }, [supabase]);
 
+
+  useEffect(() => {
+    const term = globalSearch.trim();
+    if (term.length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) {
+        if (active) { setSearchResults([]); setSearching(false); }
+        return;
+      }
+      const { data: ownerId } = await supabase.rpc("current_business_owner_id");
+      if (!ownerId) {
+        if (active) { setSearchResults([]); setSearching(false); }
+        return;
+      }
+      const { data: membership } = await supabase.from("business_memberships")
+        .select("role").eq("owner_id", ownerId).eq("user_id", user.id)
+        .eq("active", true).maybeSingle();
+      if (!membership) {
+        if (active) { setSearchResults([]); setSearching(false); }
+        return;
+      }
+      const salesIds = [user.id];
+      if (membership.role !== "cashier") {
+        const { data: members } = await supabase.from("business_memberships")
+          .select("user_id").eq("owner_id", ownerId).eq("active", true);
+        salesIds.push(ownerId, ...(members || []).map((m) => m.user_id));
+      }
+      const pattern = `%${term.replace(/[%_,]/g, " ")}%`;
+      const [productsResult, namesResult, phonesResult, emailsResult, salesResult] = await Promise.all([
+        supabase.from("products").select("id, name, selling_price, stock_quantity")
+          .eq("user_id", ownerId).ilike("name", pattern).limit(5),
+        supabase.from("customers").select("id, full_name, phone, email")
+          .eq("user_id", ownerId).ilike("full_name", pattern).limit(5),
+        supabase.from("customers").select("id, full_name, phone, email")
+          .eq("user_id", ownerId).ilike("phone", pattern).limit(5),
+        supabase.from("customers").select("id, full_name, phone, email")
+          .eq("user_id", ownerId).ilike("email", pattern).limit(5),
+        supabase.from("sales").select("id, receipt_number, total, status")
+          .in("user_id", [...new Set(salesIds)]).ilike("receipt_number", pattern)
+          .order("created_at", { ascending: false }).limit(5)
+      ]);
+      if (!active) return;
+      const customers = [...(namesResult.data || []), ...(phonesResult.data || []), ...(emailsResult.data || [])]
+        .filter((row, index, all) => all.findIndex((item) => item.id === row.id) === index).slice(0, 5);
+      const results = [
+        ...(productsResult.data || []).map((item) => ({
+          id: item.id, title: item.name, detail: `Product · ${money(Number(item.selling_price))} · Stock ${item.stock_quantity}`,
+          type: "Product", href: "/products"
+        })),
+        ...customers.map((item) => ({
+          id: item.id, title: item.full_name, detail: `Customer · ${item.phone || item.email || "Customer record"}`,
+          type: "Customer", href: "/customers"
+        })),
+        ...(salesResult.data || []).map((item) => ({
+          id: item.id, title: item.receipt_number, detail: `Sale · ${money(Number(item.total))} · ${item.status}`,
+          type: "Sale", href: membership.role === "cashier" ? "/" : "/reports"
+        }))
+      ];
+      setSearchResults(results);
+      setSearching(false);
+    }, 300);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [globalSearch, supabase]);
+
   useEffect(() => { void loadDashboard(); }, [loadDashboard]);
 
   async function signOut() {
@@ -174,7 +250,17 @@ export default function Home() {
       <section className="main-area">
         <header className="topbar">
           <button className="menu-button" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu /></button>
-          <div className="search-box"><Search size={18} /><input placeholder="Search anything..." disabled /></div>
+          <div className="search-box" style={{ position: "relative" }}>
+            <Search size={18} />
+            <input value={globalSearch} onChange={(event) => { setGlobalSearch(event.target.value); setSearchOpen(true); }} onFocus={() => setSearchOpen(true)} onKeyDown={(event) => { if (event.key === "Escape") setSearchOpen(false); }} placeholder="Search products, customers, sales..." aria-label="Search products, customers and sales" />
+            {searchOpen && globalSearch.trim().length >= 2 && <div style={{ position: "absolute", top: "calc(100% + 10px)", left: 0, right: 0, zIndex: 50, background: "white", border: "1px solid #e5e8ef", borderRadius: 10, boxShadow: "0 12px 35px rgba(20,30,50,.16)", padding: 8, maxHeight: 360, overflowY: "auto", minWidth: 260 }}>
+              {searching ? <p style={{ margin: 0, padding: 12, color: "#778294", fontSize: 12 }}>Searching...</p> :
+                searchResults.length ? searchResults.map((result) => <Link key={result.type + result.id} href={result.href} onClick={() => { setSearchOpen(false); setGlobalSearch(""); }} style={{ display: "block", padding: "10px 11px", borderRadius: 7, textDecoration: "none", color: "#182230" }}>
+                  <span style={{ display: "block", fontSize: 13, fontWeight: 650 }}>{result.title}</span>
+                  <span style={{ display: "block", fontSize: 11, color: "#778294", marginTop: 3 }}>{result.detail}</span>
+                </Link>) : <p style={{ margin: 0, padding: 12, color: "#778294", fontSize: 12 }}>No matching products, customers or sales.</p>}
+            </div>}
+          </div>
           <PwaInstallButton />
           <button className="notification" onClick={() => void loadDashboard(true)} aria-label="Refresh dashboard">
             <RefreshCw size={18} className={refreshing ? "spin" : ""} />
