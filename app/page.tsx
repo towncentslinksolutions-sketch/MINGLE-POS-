@@ -333,7 +333,7 @@ export default function Home() {
           <div className="quick-actions">
             <Link href="/products"><Package size={18} /> Open inventory</Link>
             {role === "owner" && <Link href="/team"><Users size={18} /> Invite employees</Link>}
-            <div><ShoppingCart size={18} /> Point of Sale <span>Checkout module coming next</span></div>
+            <Link href="/pos"><ShoppingCart size={18} /> Point of Sale <span>Open checkout</span></Link>
             <div><Wallet size={18} /> Sales summary <span>{isCashier ? "Personal activity" : "Business activity"}</span></div>
             <div><Clock3 size={18} /> Live records <span>Synced from Supabase</span></div>
           </div>
