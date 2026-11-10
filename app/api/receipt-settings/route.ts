@@ -20,9 +20,15 @@ export async function GET() {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
+    const { data: ownerId, error: ownerError } = await auth.rpc("current_business_owner_id");
+    if (ownerError || !ownerId) {
+      return NextResponse.json({ error: ownerError?.message || "Your account is not linked to an active business." }, { status: 403 });
+    }
+
     const { data: membership, error: membershipError } = await admin
       .from("business_memberships")
-      .select("owner_id, active")
+      .select("owner_id")
+      .eq("owner_id", ownerId)
       .eq("user_id", user.id)
       .eq("active", true)
       .maybeSingle();
