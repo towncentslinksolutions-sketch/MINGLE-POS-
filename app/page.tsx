@@ -77,16 +77,29 @@ export default function Home() {
 
     const currentRole = membership.role as Role;
     setRole(currentRole);
-    const salesUserId = currentRole === "cashier" ? user.id : ownerId;
+    let salesUserIds = [user.id];
+    if (currentRole !== "cashier") {
+      const { data: memberships, error: membershipsError } = await supabase.from("business_memberships").select("user_id").eq("owner_id", ownerId).eq("active", true);
+      if (membershipsError) {
+        setError(membershipsError.message);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+      salesUserIds = [...new Set([ownerId, ...(memberships || []).map((m) => m.user_id)])];
+    }
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [salesResult, productsResult, customersResult] = await Promise.all([
+    const [salesResult, dailyResult, productsResult, customersResult] = await Promise.all([
       supabase.from("sales")
         .select("id, receipt_number, total, status, created_at")
-        .eq("user_id", salesUserId)
+        .in("user_id", salesUserIds)
         .order("created_at", { ascending: false })
         .limit(8),
+      supabase.from("sales").select("total, created_at")
+        .in("user_id", salesUserIds)
+        .gte("created_at", startOfDay.toISOString()),
       supabase.from("products").select("id", { count: "exact", head: true }).eq("user_id", ownerId),
       supabase.from("customers").select("id", { count: "exact", head: true }).eq("user_id", ownerId),
     ]);
@@ -95,10 +108,11 @@ export default function Home() {
     else {
       const rows = (salesResult.data || []) as Sale[];
       setSales(rows);
-      const todays = rows.filter((sale) => new Date(sale.created_at) >= startOfDay);
+      const todays = dailyResult.data || [];
       setTodaySales(todays.reduce((sum, sale) => sum + Number(sale.total || 0), 0));
       setTodayOrders(todays.length);
     }
+    if (dailyResult.error) setError((previous) => previous || dailyResult.error.message);
     if (productsResult.error) setError((previous) => previous || productsResult.error.message);
     else setProductCount(productsResult.count || 0);
     if (customersResult.error) setError((previous) => previous || customersResult.error.message);
