@@ -55,6 +55,7 @@ export async function GET() {
       return {
         owner_id: row.owner_id,
         email: data.user?.email || "Email unavailable",
+        business_name: String(data.user?.user_metadata?.business_name || "Business name not provided"),
         created_at: row.created_at,
       };
     }));
@@ -98,12 +99,12 @@ export async function POST(request: NextRequest) {
     const ownerId = invitation.user.id;
     const { error: membershipError } = await adminClient
       .from("business_memberships")
-      .upsert({
+      .insert({
         owner_id: ownerId,
         user_id: ownerId,
         role: "owner",
         active: true,
-      }, { onConflict: "owner_id,user_id" });
+      });
 
     if (membershipError) {
       await adminClient.auth.admin.deleteUser(ownerId);
