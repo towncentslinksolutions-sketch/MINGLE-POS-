@@ -20,6 +20,9 @@ export default function TeamPage() {
   const [busyId, setBusyId] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [inviteLink, setInviteLink] = useState("");
+  const [inviteActive, setInviteActive] = useState(false);
+  const [inviteBusy, setInviteBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true); setError(""); setNotice("");
@@ -27,6 +30,11 @@ export default function TeamPage() {
     const user = session?.user;
     if (authError || !user) { setError("Please sign in again."); setLoading(false); return; }
     setMyId(user.id);
+    const inviteStatusResponse = await fetch("/api/employee-invitations", { cache: "no-store" });
+    if (inviteStatusResponse.ok) {
+      const inviteStatus = await inviteStatusResponse.json();
+      setInviteActive(Boolean(inviteStatus.active));
+    }
     const { data: businessId, error: businessError } = await supabase.rpc("current_business_owner_id");
     if (businessError || !businessId) { setError(businessError?.message || "No business is linked to this account."); setLoading(false); return; }
     setOwnerId(businessId);
@@ -47,6 +55,31 @@ export default function TeamPage() {
   }, [supabase]);
 
   useEffect(() => { void load(); }, [load]);
+
+  async function manageInviteLink(action: "create" | "revoke") {
+    setInviteBusy(true); setError(""); setNotice("");
+    try {
+      const response = await fetch("/api/employee-invitations", { method: action === "create" ? "POST" : "DELETE" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Could not update the employee invitation link.");
+      if (action === "create") {
+        setInviteLink(result.link);
+        setInviteActive(true);
+        setNotice("Shared employee registration link created. Copy it and send it to your employees.");
+      } else {
+        setInviteLink(""); setInviteActive(false);
+        setNotice("The shared employee registration link has been disabled.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update the invitation link.");
+    } finally { setInviteBusy(false); }
+  }
+
+  async function copyInviteLink() {
+    if (!inviteLink) return;
+    try { await navigator.clipboard.writeText(inviteLink); setNotice("Invitation link copied. You can now share it on WhatsApp."); }
+    catch { setError("Copy was blocked by your browser. Select and copy the link manually."); }
+  }
 
   async function setMemberActive(member: Member, active: boolean) {
     if (!ownerId || member.user_id === ownerId || member.role === "owner") return;
@@ -79,7 +112,15 @@ export default function TeamPage() {
       </header>
       {error && <div role="alert" style={{ background: "#fff0f0", color: "#a52d2d", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 14 }}>{error}</div>}
       {notice && <div role="status" style={{ background: "#edf8f0", color: "#216b3b", borderRadius: 8, padding: 12, fontSize: 13, marginBottom: 14 }}>{notice}</div>}
-      {allowed && <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 18 }}>
+      {allowed && <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 18, marginBottom: 18 }}>
+        <h2 style={{ fontSize: 18, margin: "0 0 6px" }}>Shared employee registration link</h2>
+        <p style={{ color: "#778294", fontSize: 13, lineHeight: 1.6 }}>Create one link and share it with all employees. Anyone with the link can request to join this business as a cashier. You can disable it or generate a replacement at any time.</p>
+        {inviteActive && <p style={{ color: "#23834a", fontSize: 12 }}>A shared invitation link is currently active.</p>}
+        {inviteLink && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}><input readOnly value={inviteLink} aria-label="Shared employee invitation link" style={{ flex: "1 1 230px", minWidth: 0, padding: 11, border: "1px solid #dfe4ec", borderRadius: 8, fontSize: 12 }} /><button onClick={() => void copyInviteLink()} style={{ border: 0, borderRadius: 8, background: "#635bdb", color: "white", padding: "10px 14px", fontWeight: 700 }}>Copy link</button></div>}
+        <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}><button disabled={inviteBusy} onClick={() => void manageInviteLink("create")} style={{ border: 0, borderRadius: 8, background: "#635bdb", color: "white", padding: "11px 14px", fontWeight: 700 }}>{inviteBusy ? "Please wait..." : inviteActive ? "Generate new link" : "Create shared link"}</button>{inviteActive && <button disabled={inviteBusy} onClick={() => void manageInviteLink("revoke")} style={{ border: "1px solid #e5e8ef", borderRadius: 8, background: "white", color: "#b13b3b", padding: "10px 14px" }}>Disable link</button>}</div>
+        <p style={{ color: "#8a94a5", fontSize: 11, marginTop: 12 }}>For security, generating a new link replaces the previous one. Employees receive an email to set their password. Do not post this link publicly.</p>
+      </section>
+      <section style={{ background: "white", border: "1px solid #e9edf3", borderRadius: 13, padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 14 }}><ShieldCheck color="#635bdb"/><strong>{members.filter(m => m.active).length} active connected account(s)</strong></div>
         {loading ? <p style={{ padding: 30, textAlign: "center", color: "#778294" }}>Loading employees...</p> : members.length === 0 ? <p>No business memberships found.</p> :
           <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", minWidth: 760, textAlign: "left" }}>
