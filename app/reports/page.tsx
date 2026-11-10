@@ -21,7 +21,8 @@ export default function ReportsPage() {
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
     if (authError || !user) { setError("Please sign in to view reports."); setLoading(false); return; }
     const { data: ownerId, error: ownerError } = await supabase.rpc("current_business_owner_id");
     if (ownerError || !ownerId) { setError(ownerError?.message || "This account is not linked to a business."); setLoading(false); return; }
