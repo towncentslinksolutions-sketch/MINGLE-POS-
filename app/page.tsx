@@ -241,6 +241,9 @@ export default function Home() {
           {role === "owner" && <Link href="/team" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
             <UserCog size={19} /><span>Employees</span>
           </Link> }
+          {role === "owner" && isPlatformAdmin && <Link href="/platform-admin" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
+            <ShieldCheck size={19} /><span>Platform Admin</span>
+          </Link>}
         </nav>
         <div className="sidebar-bottom">
           <div className="user-avatar">{initials}</div>
