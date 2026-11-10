@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -49,7 +50,18 @@ export default function Home() {
         <nav>
           {navigation.map((item) => {
             const Icon = item.icon;
-            return (
+            return item.name === "Products" ? (
+              <Link
+                key={item.name}
+                href="/products"
+                className="nav-item"
+                onClick={() => setMenuOpen(false)}
+                style={{ textDecoration: "none" }}
+              >
+                <Icon size={19} />
+                <span>{item.name}</span>
+              </Link>
+            ) : (
               <button
                 key={item.name}
                 className={`nav-item ${active === item.name ? "active" : ""}`}
