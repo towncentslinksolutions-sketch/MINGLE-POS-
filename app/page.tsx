@@ -33,6 +33,7 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [role, setRole] = useState<Role | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [todaySales, setTodaySales] = useState(0);
@@ -58,6 +59,8 @@ export default function Home() {
       return;
     }
     setEmail(user.email || "");
+    const adminCheck = await fetch("/api/platform-admin/clients", { cache: "no-store" });
+    setIsPlatformAdmin(adminCheck.ok);
     const { data: ownerId, error: ownerError } = await supabase.rpc("current_business_owner_id");
     if (ownerError || !ownerId) {
       setError(ownerError?.message || "This account is not linked to a business yet.");
