@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   LayoutDashboard, ShoppingCart, Package, Users, BarChart3, Bell,
   Search, Menu, X, TrendingUp, Receipt, Wallet, Clock3, RefreshCw,
-  LogOut, ShieldCheck, AlertCircle, UserCog
+  LogOut, ShieldCheck, AlertCircle, UserCog, Scissors
 } from "lucide-react";
 import { createClient } from "../lib/supabase/client";
 import PwaInstallButton from "./pwa-install-button";
@@ -232,6 +232,9 @@ export default function Home() {
           </Link>
           <Link href="/customers" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
             <Users size={19} /><span>Customers</span>
+          </Link>
+          <Link href="/salon" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
+            <Scissors size={19} /><span>Salon & Beauty</span>
           </Link>
           {!isCashier && <Link href="/reports" className="nav-item" onClick={() => setMenuOpen(false)} style={{ textDecoration: "none" }}>
             <BarChart3 size={19} /><span>Reports</span>
