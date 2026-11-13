@@ -86,7 +86,7 @@ export default function OrdersPage() {
       status: "draft", payment_status: paymentStatus, total, expected_date: expectedDate || null, notes: notes.trim()
     };
     const table = tab === "customer" ? "customer_orders" : "supplier_orders";
-    const { data: created, error: createError } = await supabase.from(table).insert(header).select("id").single();
+    const { data: created, error: createError } = await supabase.from(table).insert(header as any).select("id").single();
     if (createError || !created) { setError(createError?.message || "Order could not be created."); setSaving(false); return; }
     const itemRows = valid.map((l) => tab === "customer" ? {
       order_id: created.id, product_id: l.product_id || null, product_name: l.product_name.trim(),
